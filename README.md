@@ -1,21 +1,52 @@
 # Swimmy Squid
+## Overview
 
-This is a Flappy Bird clone using Super Mario Bros. 3 from Super Mario All-Stars assets.
+Swimmy Squid is a game inspired by Flappy Bird, utilizing assets from Super Mario Bros. 3 featured in Super Mario All-Stars. 
 
-# Usage
 ## Prerequisites
-1. Python is installed
-2. pip is installed
-3. git is installed
+Before you begin, ensure you have met the following requirements:
 
-## Installation and running
-1. Clone the repo
-2. In a terminal or command line, navigate to where you cloned the repo
-3. Ensure `pygame` is installed
+- [Python](https://www.python.org/) (3.x or above) is installed
+- pip is installed
+  ```shell
+  python ensurepip
+  ```
+- [git](https://git-scm.com/downloads) is installed
+
+Your README is clear and straightforward, but we can enhance its structure and clarity a bit more. Here's an improved version:
+
+## Installation
+Follow these steps to get Swimmy Squid up and running on your machine:
+
+1. **Clone the Repository**
+   Use git to clone the project to your local machine:
    ```shell
-   pip install pygame
+   git clone https://github.com/zephenryus/swimmy_squid.git
    ```
-4. Run the game
+
+2. **Navigate to the Project Directory**
+   Change into the project directory from the terminal or command line:
+   ```shell
+   cd path/to/swimmy-squid
+   ```
+
+3. **Install Dependencies**
+   Ensure `pygame`, the core dependency for the game, is installed:
+   ```shell
+   pip install -r requirements.txt
+   ```
+
+4. **Run the Game**
+   Execute the following command to start the game:
    ```shell
    python main.py
    ```
+
+Enjoy playing Swimmy Squid!
+
+---
+
+This version of the README includes:
+- Clear section headers for better readability.
+- More detailed instructions in a step-by-step format.
+- A brief description in the overview to attract the reader's interest.
