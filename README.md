@@ -13,8 +13,6 @@ Before you begin, ensure you have met the following requirements:
   ```
 - [git](https://git-scm.com/downloads) is installed
 
-Your README is clear and straightforward, but we can enhance its structure and clarity a bit more. Here's an improved version:
-
 ## Installation
 Follow these steps to get Swimmy Squid up and running on your machine:
 
