@@ -41,10 +41,3 @@ Follow these steps to get Swimmy Squid up and running on your machine:
    ```
 
 Enjoy playing Swimmy Squid!
-
----
-
-This version of the README includes:
-- Clear section headers for better readability.
-- More detailed instructions in a step-by-step format.
-- A brief description in the overview to attract the reader's interest.
