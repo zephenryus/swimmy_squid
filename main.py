@@ -5,7 +5,7 @@ from os import path
 import pygame
 
 pygame.init()
-screen = pygame.display.set_mode((360, 640))
+screen = pygame.display.set_mode((360, 640), vsync=1)
 clock = pygame.time.Clock()
 running = True
 game_over = True
@@ -21,14 +21,17 @@ seaweed_1_img = pygame.image.load(path.join(img_dir, "sea-weed-1.png")).convert(
 seaweed_2_img = pygame.image.load(path.join(img_dir, "sea-weed-2.png")).convert()
 seaweed_3_img = pygame.image.load(path.join(img_dir, "sea-weed-3.png")).convert()
 seaweed_4_img = pygame.image.load(path.join(img_dir, "sea-weed-4.png")).convert()
+bubble_img = pygame.image.load(path.join(img_dir, "bubble.png")).convert()
 
 all_sprites = pygame.sprite.Group()
 tube_sprites = pygame.sprite.Group()
+bubble_sprites = pygame.sprite.Group()
 score = 0
 waves = []
 seaweeds = []
 tubes = []
 floors = []
+bubbles = []
 
 distance_between_tubes = 384
 
@@ -45,6 +48,26 @@ class Player(pygame.sprite.Sprite):
         self.rect.centerx = screen.get_width() // 4
         self.rect.centery = screen.get_height() // 2
         self.radius = 16
+        self.is_ascending = False
+        self.ascending_time = 250
+        self.last_ascending_time = 0
+        self.max_decent_velocity = 4
+
+    def update(self):
+        if self.is_ascending:
+            now = pygame.time.get_ticks()
+
+            if now - self.last_ascending_time > self.ascending_time:
+                self.is_ascending = False
+
+    def ascend(self):
+        bubble = Bubble(self.rect.centerx, self.rect.centery)
+        bubble.ascent_velocity = 0
+        bubble.is_player_bubble = True
+        bubble_sprites.add(bubble)
+        bubbles.append(bubble)
+        self.last_ascending_time = pygame.time.get_ticks()
+        self.is_ascending = True
 
 
 player = Player()
@@ -108,7 +131,7 @@ class Floor(pygame.sprite.Sprite):
 
 
 class Seaweed(pygame.sprite.Sprite):
-    def __init__(self, x, y, animation_frame=0):
+    def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.images = [
             seaweed_1_img,
@@ -116,7 +139,6 @@ class Seaweed(pygame.sprite.Sprite):
             seaweed_3_img,
             seaweed_4_img
         ]
-        self.animation_frame = animation_frame
         self.image = pygame.transform.scale(seaweed_1_img, (32, 64))
         self.image.set_colorkey((255, 0, 255))
         self.rect = self.image.get_rect()
@@ -124,9 +146,21 @@ class Seaweed(pygame.sprite.Sprite):
         self.rect.y = y
 
     def update(self):
-        now = pygame.time.get_ticks() // 500 % len(self.images)
+        now = (pygame.time.get_ticks() // 250) % len(self.images)
         self.image = pygame.transform.scale(self.images[now], (32, 64))
         self.image.set_colorkey((255, 0, 255))
+
+
+class Bubble(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.transform.scale(bubble_img, (8, 8))
+        self.image.set_colorkey((255, 0, 255))
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.ascent_velocity = 0
+        self.ascent_velocity_max = 16
+        self.is_player_bubble = False
 
 
 def show_game_over_screen():
@@ -136,7 +170,11 @@ def show_game_over_screen():
         clock.tick(60)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                global running
+                waiting = False
+                running = False
                 pygame.quit()
+                return
             if event.type == pygame.KEYUP and pygame.time.get_ticks() - start_waiting >= 1000:
                 if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
                     waiting = False
@@ -157,6 +195,22 @@ def show_game_over_screen():
         water_surface.fill((0, 64, 136))
         water_surface.set_alpha(96)
         screen.blit(water_surface, (0, 64))
+
+        for seaweed in seaweeds:
+            seaweed.update()
+
+        for bubble in bubbles:
+            bubble.rect.x += random.randrange(-1, 2)
+            bubble.rect.y -= min(bubble.ascent_velocity_max, bubble.ascent_velocity + random.uniform(1, 1.5))
+
+            if bubble.rect.top <= 32:
+                if bubble.is_player_bubble:
+                    bubble.kill()
+                bubble.rect.x = random.randrange(0, screen.get_width() - 4)
+                bubble.rect.y = screen.get_height() + 4
+                bubble.ascent_velocity = 0
+
+        bubble_sprites.draw(screen)
 
         font = pygame.font.Font(pygame.font.match_font("arial"), 24)
         text_surface = font.render("Score:", True, (178, 212, 244))
@@ -181,6 +235,7 @@ def show_game_over_screen():
 
 def reset_game():
     global all_sprites
+    global bubble_sprites
     global tube_sprites
     global player
     global score
@@ -188,9 +243,11 @@ def reset_game():
     global seaweeds
     global tubes
     global floors
+    global bubbles
     global distance_between_tubes
 
     all_sprites = pygame.sprite.Group()
+    bubble_sprites = pygame.sprite.Group()
     player = Player()
     score = 0
 
@@ -249,6 +306,12 @@ def reset_game():
         all_sprites.add(wave)
         waves.append(wave)
 
+    bubbles = []
+    for index in range(4):
+        bubble = Bubble(random.randrange(0, screen.get_width()), random.randrange(32, screen.get_height() - 16))
+        bubble_sprites.add(bubble)
+        bubbles.append(bubble)
+
 
 reset_game()
 
@@ -263,18 +326,21 @@ while running:
             running = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE or event.key == pygame.K_UP:
+                player.ascend()
                 player.vertical_velocity -= up_velocity
 
     # Update
     position_last_frame = player.rect.y
     player.vertical_velocity += down_velocity
+    player.vertical_velocity = min(player.vertical_velocity, player.max_decent_velocity)
     player.rect.y += player.vertical_velocity
+    player.update()
 
     if player.rect.y < 0 + 16:
         player.rect.y = 0 + 16
         player.vertical_velocity *= -0.4
-    if player.rect.y > screen.get_height():
-        player.rect.y = screen.get_height()
+    if player.rect.y > screen.get_height() - 54:
+        # player.rect.y = screen.get_height() - 48
         game_over = True
 
     for tube in tubes:
@@ -327,7 +393,29 @@ while running:
             rightmost_seaweed.rect.x + random.randrange(0, 6) * leftmost_seaweed.rect.width
         )
 
-    hits = pygame.sprite.spritecollide(player, tube_sprites, False)
+    for bubble in bubbles:
+        bubble.rect.x -= random.randrange(1, 5)
+        bubble.rect.y -= min(bubble.ascent_velocity_max, bubble.ascent_velocity + random.uniform(1, 1.5))
+
+        if bubble.rect.top <= 32:
+            if bubble.is_player_bubble:
+                bubble.kill()
+            bubble.rect.x = random.randrange(screen.get_width() // 2, math.floor(screen.get_width() * 2))
+            if bubble.rect.x <= screen.get_width():
+                bubble.rect.y = screen.get_height() + 4
+            else:
+                bubble.rect.y = random.randrange(screen.get_height() // 4, math.floor(screen.get_height() * 1.25))
+            bubble.ascent_velocity = 0
+        if bubble.rect.right <= 0:
+            if bubble.is_player_bubble:
+                bubble.kill()
+            bubble.rect.x = random.randrange(screen.get_width() // 2, math.floor(screen.get_width() * 2))
+            if bubble.rect.x <= screen.get_width():
+                bubble.rect.y = screen.get_height() + 4
+            else:
+                bubble.rect.y = random.randrange(screen.get_height() // 4, math.floor(screen.get_height() * 1.25))
+
+    hits = pygame.sprite.spritecollide(player, tube_sprites, False, pygame.sprite.collide_rect_ratio(0.96))
     if hits:
         for hit in hits:
             game_over = True
@@ -335,7 +423,7 @@ while running:
     # Render
     screen.fill((165, 211, 247))
 
-    if position_last_frame - player.rect.y > -0.9999:
+    if player.is_ascending or position_last_frame - player.rect.y > -0.9999:
         player.image = pygame.transform.scale(player_up_img, (32, 32))
         player.image.set_colorkey((255, 0, 255))
     else:
@@ -348,6 +436,8 @@ while running:
     water_surface.fill((0, 64, 136))
     water_surface.set_alpha(96)
     screen.blit(water_surface, (0, 64))
+
+    bubble_sprites.draw(screen)
 
     font = pygame.font.Font(pygame.font.match_font("arial"), 18)
     text_surface = font.render(str(score), True, (255, 255, 255))

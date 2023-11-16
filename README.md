@@ -1,7 +1,9 @@
 # Swimmy Squid
 ## Overview
 
-Swimmy Squid is a game inspired by Flappy Bird, utilizing assets from Super Mario Bros. 3 featured in Super Mario All-Stars. 
+Swimmy Squid is a game inspired by Flappy Bird, utilizing assets from Super Mario Bros. 3 featured in Super Mario All-Stars.
+
+![Screenshot of Swimmy Squid](assets/screenshot-1.png "Gameplay Screenshot")
 
 ## Prerequisites
 Before you begin, ensure you have met the following requirements:
